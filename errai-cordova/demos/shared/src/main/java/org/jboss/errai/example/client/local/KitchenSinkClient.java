@@ -7,8 +7,8 @@ import com.google.gwt.user.client.ui.*;
 import com.googlecode.gwtphonegap.client.camera.Camera;
 import com.googlecode.gwtphonegap.client.camera.PictureCallback;
 import com.googlecode.gwtphonegap.client.camera.PictureOptions;
+import org.jboss.errai.bus.client.api.BusErrorCallback;
 import org.jboss.errai.bus.client.api.Message;
-import org.jboss.errai.bus.client.api.RpcErrorCallback;
 import org.jboss.errai.common.client.api.Caller;
 import org.jboss.errai.common.client.api.RemoteCallback;
 import org.jboss.errai.example.client.shared.Member;
@@ -166,7 +166,7 @@ public class KitchenSinkClient extends Composite {
             // so we don't have to do that here.
           }
         },
-        new RpcErrorCallback() {
+        new BusErrorCallback() {
           @Override
           public boolean error(Message message, Throwable throwable) {
             setGeneralErrorMessage("Member registration failed: " + throwable.getMessage());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 JBoss, by Red Hat, Inc
+ * Copyright 2012 JBoss, by Red Hat, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jboss.errai.bus.client.api.builder.DefaultRemoteCallBuilder;
 import org.jboss.errai.bus.client.framework.RequestDispatcher;
 import org.jboss.errai.bus.client.util.ErrorHelper;
 import org.jboss.errai.bus.server.DefaultTaskManager;
+import org.jboss.errai.bus.server.ServerMessageBusImpl;
 import org.jboss.errai.bus.server.api.ServerMessageBus;
 import org.jboss.errai.bus.server.api.SessionProvider;
 import org.jboss.errai.bus.server.io.websockets.WebSocketServer;
@@ -53,13 +54,11 @@ public class ErraiServiceImpl<S> implements ErraiService<S> {
   /**
    * Initializes the errai service with a bus and configurator
    *
-   * @param bus          - the bus to be associated with this service
    * @param configurator - the configurator to take care of the configuration for the service
    */
   @Inject
-  public ErraiServiceImpl(final ServerMessageBus bus,
-                          final ErraiServiceConfigurator configurator) {
-    this.bus = bus;
+  public ErraiServiceImpl(final ErraiServiceConfigurator configurator) {
+    this.bus = new ServerMessageBusImpl(this, configurator);
     this.config = configurator;
     boostrap();
   }

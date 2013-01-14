@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 JBoss, by Red Hat, Inc
+ * Copyright 2012 JBoss, by Red Hat, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,8 @@ public class MessageQueueImpl implements MessageQueue {
       return ((Buffered) deliveryHandler).copyFromBuffer(wait, this, outstream);
     }
     else {
-      log.warn("call to poll() when DeliveryHandler does not implement Buffered.");
+      // this can happen during the hand off to WebSockets.
+      log.debug("call to poll() when DeliveryHandler does not implement Buffered.");
     }
 
     return false;

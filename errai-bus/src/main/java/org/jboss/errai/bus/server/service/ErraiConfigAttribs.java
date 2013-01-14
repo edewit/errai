@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -67,11 +67,13 @@ public enum ErraiConfigAttribs {
 
   AUTO_DISCOVER_SERVICES("errai.bus.auto_discover_services", "false"),
 
-  CLUSTER_PORT("errai.clustering.port", "6446");
+  CLUSTER_PORT("errai.clustering.port", "6446"),
+  CLUSTER_NAME("errai.bus.cluster_name", "errai"),
+  ENABLE_CLUSTERING("errai.bus.enable_clustering", "false"),
+  CLUSTERING_PROVIDER("errai.bus.clustering_provider", "org.jboss.errai.bus.server.cluster.noop.NoopClusteringProvider");
 
   protected final String attributeName;
   protected final String defaultValue;
-
 
   private ErraiConfigAttribs(String attributeName) {
     this(attributeName, null);

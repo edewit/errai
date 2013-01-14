@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 JBoss, by Red Hat, Inc
+ * Copyright 2012 JBoss, by Red Hat, Inc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,9 @@ public interface ServerMessageBus extends MessageBus {
 
   public void associateNewQueue(QueueSession oldSession, QueueSession newSession);
 
-  public Message getSuspendedMessage(String messageId);
+  public Message getDeadLetterMessage(String messageId);
+
+  public boolean removeDeadLetterMessage(String messageId);
 
   /**
    * Stop the MessateBus.
