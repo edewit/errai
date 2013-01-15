@@ -28,6 +28,7 @@ import org.jboss.errai.databinding.client.ModuleWithInjectedDataBinder;
 import org.jboss.errai.databinding.client.NonExistingPropertyException;
 import org.jboss.errai.databinding.client.TestModel;
 import org.jboss.errai.databinding.client.TestModelWithoutBindableAnnotation;
+import org.jboss.errai.databinding.client.WidgetAlreadyBoundException;
 import org.jboss.errai.databinding.client.api.Convert;
 import org.jboss.errai.databinding.client.api.DataBinder;
 import org.jboss.errai.databinding.client.api.InitialState;
@@ -124,7 +125,7 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
   }
 
   @Test
-  public void testBindingOfNonExistingProperty() {
+  public void testBindingOfNonExistingPropertyThrowsException() {
     try {
       DataBinder.forType(TestModel.class).bind(new TextBox(), "non-existing");
       fail("Expected NonExistingPropertyException!");
@@ -134,7 +135,19 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
       assertEquals("Exception message contains wrong property name", "non-existing", nepe.getMessage());
     }
   }
-
+  
+  @Test
+  public void testBindingOfSingleWidgetToMultiplePropertiesThrowsException() {
+    TextBox textBox = new TextBox();
+    try {
+      DataBinder.forType(TestModel.class).bind(textBox, "value").bind(textBox, "name");
+      fail("Binding a widget to multiple properties should fail with an exception!");
+    } catch (WidgetAlreadyBoundException e) {
+      // expected
+      assertTrue("Exception message does not contain property name", e.getMessage().contains("value"));
+    }
+  }
+  
   @Test
   public void testBindingOfSinglePropertyToMultipleWidgets() {
     TextBox textBox1 = new TextBox();
@@ -154,17 +167,6 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
     model.setValue("model change");
     assertEquals("Widget not properly updated", "model change", textBox1.getText());
     assertEquals("Widget not properly updated", "model change", textBox2.getText());
-  }
-  
-  @Test
-  public void testBindingOfSingleWidgetToMultiplePropertiesThrowsException() {
-    TextBox textBox = new TextBox();
-    try {
-      DataBinder.forType(TestModel.class).bind(textBox, "value").bind(textBox, "name");
-      fail("Binding a widget to multiple properties should fail with an exception!");
-    } catch (RuntimeException e) {
-      // expected
-    }
   }
   
   @Test
@@ -376,6 +378,7 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
 
     // unbind specific nested property
     binder.unbind("child.name");
+    assertEquals("Only one bound property should be left", 1, binder.getBoundProperties().size());
     model.getChild().setName("model change");
     assertEquals("Widget should not have been updated because unbind was called for this property", "", nameTextBox
         .getText());
@@ -394,6 +397,8 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
 
     // unbind all properties
     binder.unbind();
+    assertEquals("No property should be bound", 0, binder.getBoundProperties().size());
+
     model.getChild().setValue("model change");
     assertEquals("Widget should not have been updated because unbind was called", "", valueTextBox.getText());
 
@@ -473,7 +478,7 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
   }
 
   @Test
-  public void testGetWidget() {
+  public void testGetWidgets() {
     TextBox textBox1 = new TextBox();
     TextBox textBox2 = new TextBox();
     DataBinder<TestModel> binder = DataBinder.forType(TestModel.class).bind(textBox1, "value").bind(textBox2, "value");
@@ -506,26 +511,26 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
 
     textBox.setValue("UI change", true);
     assertEquals("Model not properly updated", "UI change", binder.getModel().getValue());
-    assertEquals("Should have received excatly one property change event", 1, handler.getEvents().size());
+    assertEquals("Should have received exactly one property change event", 1, handler.getEvents().size());
     assertEquals("Wrong property name in event", "value", handler.getEvents().get(0).getPropertyName());
     assertEquals("Wrong property value in event", "UI change", handler.getEvents().get(0).getNewValue());
     assertNull("Previous value should have been null", handler.getEvents().get(0).getOldValue());
     assertEquals("Wrong event source", binder.getModel(), handler.getEvents().get(0).getSource());
 
     // This should not cause additional events to be fired
-    binder.setModel(binder.getModel(), InitialState.FROM_MODEL);
+    binder.setModel(new TestModel(), InitialState.FROM_MODEL);
     
     binder.getModel().setValue("model change");
     assertEquals("Widget not properly updated", "model change", textBox.getText());
-    assertEquals("Should have received excatly two property change event", 2, handler.getEvents().size());
+    assertEquals("Should have received exactly two property change event", 2, handler.getEvents().size());
     assertEquals("Wrong property name in event", "value", handler.getEvents().get(1).getPropertyName());
     assertEquals("Wrong property value in event", "model change", handler.getEvents().get(1).getNewValue());
-    assertEquals("Wrong previous value in event", "UI change", handler.getEvents().get(1).getOldValue());
+    assertEquals("Wrong previous value in event", null, handler.getEvents().get(1).getOldValue());
     assertEquals("Wrong event source", binder.getModel(), handler.getEvents().get(1).getSource());
   }
   
   @Test
-  public void testBinderRetainsPropertyChangeHandlersAfterModelInstanceChange() {
+  public void testBinderRetainsPropertyChangeHandlersAfterModelChange() {
     MockHandler handler = new MockHandler();
 
     TextBox textBox = new TextBox();
@@ -535,18 +540,35 @@ public class DataBindingIntegrationTest extends AbstractErraiIOCTest {
 
     textBox.setValue("UI change", true);
     assertEquals("Model not properly updated", "UI change", binder.getModel().getValue());
-    assertEquals("Should have received excatly one property change event", 1, handler.getEvents().size());
+    assertEquals("Should have received exactly one property change event", 1, handler.getEvents().size());
 
     binder.getModel().setValue("model change");
     assertEquals("Widget not properly updated", "model change", textBox.getText());
-    assertEquals("Should have received excatly two property change event", 2, handler.getEvents().size());
+    assertEquals("Should have received exactly two property change event", 2, handler.getEvents().size());
+  }
+  
+  @Test
+  public void testPropertyChangeEventsAreFiredDuringStateSync() {
+    MockHandler handler = new MockHandler();
+
+    TextBox textBox = new TextBox();
+    textBox.setValue("UI change");
+    
+    DataBinder<TestModel> binder = DataBinder.forType(TestModel.class, InitialState.FROM_UI);
+    binder.addPropertyChangeHandler(handler);
+    binder.bind(textBox, "value");
+
+    assertEquals("Model not properly updated", "UI change", binder.getModel().getValue());
+    assertEquals("Should have received exactly one property change event", 1, handler.getEvents().size());
+    assertEquals("Wrong property name in event", "value", handler.getEvents().get(0).getPropertyName());
+    assertEquals("Wrong property value in event", "UI change", handler.getEvents().get(0).getNewValue());
   }
 
   /**
    * Ensures that, when a property change event is fired, the new value is already set on the model object.
    */
   @Test
-  public void testNewValueIsSetBeforeEventIsFired() {
+  public void testNewValueIsSetBeforePropertyChangeEventIsFired() {
     TextBox textBox = new TextBox();
     final DataBinder<TestModel> binder = DataBinder.forType(TestModel.class).bind(textBox, "value");
     binder.getModel().setValue("Old Value");

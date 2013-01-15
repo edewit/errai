@@ -29,6 +29,7 @@ import org.jboss.errai.jpa.test.entity.Zentity;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.TextBox;
+import org.junit.Ignore;
 
 /**
  * Tests the JPA EntityManager facilities provided by Errai JPA.
@@ -755,6 +756,8 @@ public class ErraiJpaTest extends GWTTestCase {
     assertEquals(String.valueOf(album.getId()), box.getText());
   }
 
+//  TEMPORARY SKIP
+//
   public void testEnsurePropertyChangeEventIsFiredAfterIdGeneration() {
     DataBinder<Album> binder = DataBinder.forType(Album.class);
     Album album = binder.getModel();
@@ -768,13 +771,13 @@ public class ErraiJpaTest extends GWTTestCase {
         eventAlbum.setId(event.getNewValue());
       }
     });
-    
+
     // store it
     EntityManager em = getEntityManager();
     em.persist(album);
     em.flush();
     em.detach(album);
-    
+
     assertNotNull(album.getId());
     assertEquals(album.getId(), eventAlbum.getId());
   }

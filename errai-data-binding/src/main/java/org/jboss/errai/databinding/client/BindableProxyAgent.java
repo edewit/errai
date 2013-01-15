@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jboss.errai.common.client.api.Assert;
 import org.jboss.errai.databinding.client.api.Convert;
 import org.jboss.errai.databinding.client.api.Converter;
 import org.jboss.errai.databinding.client.api.DataBinder;
@@ -97,7 +98,7 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
     for (Binding binding : other.bindings.values()) {
       bind(binding.getWidget(), binding.getProperty(), binding.getConverter());
     }
-
+    
     propertyChangeHandlerSupport = other.propertyChangeHandlerSupport;
   }
 
@@ -162,7 +163,7 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
 
     for (Binding binding : bindings.values()) {
       if (binding.getWidget().equals(widget)) {
-        throw new RuntimeException("Widget already bound to a different property!");
+        throw new WidgetAlreadyBoundException("Widget already bound to property: " + binding.getProperty());
       }
     }
 
@@ -177,7 +178,7 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
                 Convert.toModelValue(propertyTypes.get(property).getType(), widget, event.getValue(), converter);
           proxy.set(property, newValue);
 
-          updateWidgetsAndFireEvents(property, oldValue, newValue, widget);
+          updateWidgetsAndFireEvent(property, oldValue, newValue, widget);
         }
       });
     }
@@ -246,8 +247,6 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
       binding.removeHandler();
     }
     bindings.clear();
-    
-    knownValues.clear();
   }
 
   /**
@@ -265,16 +264,13 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
       DataBinder binder = binders.get(bindableProperty);
       if (binder != null) {
         binder.unbind(property.substring(dotPos + 1));
-        return;
       }
     }
 
-    for (Binding binding :  bindings.get(property)) {
+    for (Binding binding : bindings.get(property)) {
       binding.removeHandler();
     }
     bindings.removeAll(property);
-    
-    knownValues.remove(property);
   }
 
   /**
@@ -297,13 +293,29 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
           nestedBinder.setModel(actualValue, initialState);
           proxy.set(property, nestedBinder.getModel());
         }
-        updateWidgetsAndFireEvents(property, knownValue, actualValue);
+        updateWidgetsAndFireEvent(property, knownValue, actualValue);
       }
     }
   }
 
   /**
-   * Updates a bound widget and fires the corresponding {@link PropertyChangeEvent}.
+   * Updates all bound widgets and fires the corresponding {@link PropertyChangeEvent}.
+   * 
+   * @param <P>
+   *          The property type of the changed property.
+   * @param property
+   *          The name of the property that changed. Must not be null.
+   * @param oldValue
+   *          The old value of the property.
+   * @param newValue
+   *          The new value of the property.
+   */
+  <P> void updateWidgetsAndFireEvent(final String property, final P oldValue, final P newValue) {
+    updateWidgetsAndFireEvent(property, oldValue, newValue, null);
+  }
+  
+  /**
+   * Updates all bound widgets and fires the corresponding {@link PropertyChangeEvent}.
    * 
    * @param <P>
    *          The property type of the changed property.
@@ -315,12 +327,10 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
    *          The old value of the property.
    * @param newValue
    *          The new value of the property.
+   * @param excluding
+   *          A widget reference that does not need to be updated (the origin of the value change event).
    */
-  <P> void updateWidgetsAndFireEvents(final String property, final P oldValue, final P newValue) {
-    updateWidgetsAndFireEvents(property, oldValue, newValue, null);
-  }
-  
-  private <P> void updateWidgetsAndFireEvents(final String property, final P oldValue, final P newValue, final Widget excluding) {
+  private <P> void updateWidgetsAndFireEvent(final String property, final P oldValue, final P newValue, final Widget excluding) {
     for (Binding binding : bindings.get(property)) {
       Widget widget = binding.getWidget();
       Converter converter = binding.getConverter();
@@ -342,7 +352,24 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
       }
     }
     
-    knownValues.put(property, newValue);
+    firePropertyChangeEvent(property, oldValue, newValue);
+  }
+  
+  /**
+   * Fires a property change event.
+   * 
+   * @param <P>
+   *          The property type of the changed property.
+   * @param property
+   *          The name of the property that changed. Must not be null.
+   * @param oldValue
+   *          The old value of the property.
+   * @param newValue
+   *          The new value of the property.
+   */
+  private <P> void firePropertyChangeEvent(final String property, final P oldValue, final P newValue) {
+    knownValues.put(Assert.notNull(property), newValue);
+    
     PropertyChangeEvent<P> event = new PropertyChangeEvent<P>(proxy, property, oldValue, newValue);
     propertyChangeHandlerSupport.notifyHandlers(event);
   }
@@ -366,6 +393,17 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
     }
   }
 
+  /**
+   * Synchronizes the state of the provided widgets and model property based on the value of the provided {@link InitialState}.
+   * 
+   * @param widget
+   *          The widget to synchronize.
+   * @param property
+   *          The name of the model property that should be synchronized.
+   * @param initialState
+   *          Specifies the origin of the initial state of both model and UI widget. Null if no initial state
+   *          synchronization should be carried out.
+   */
   private void syncState(final Widget widget, final String property, final InitialState initialState) {
     if (initialState != null) {
       Object value = proxy.get(property);
@@ -377,10 +415,11 @@ public final class BindableProxyAgent<T> implements HasPropertyChangeHandlers {
       }
 
       if (initialState == InitialState.FROM_MODEL) {
-        updateWidgetsAndFireEvents(property, knownValues.get(property), value);
+        updateWidgetsAndFireEvent(property, knownValues.get(property), value);
       }
       else if (initialState == InitialState.FROM_UI) {
         proxy.set(property, value);
+        firePropertyChangeEvent(property, knownValues.get(property), value);
       }
     }
   }

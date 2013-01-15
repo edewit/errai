@@ -26,6 +26,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.annotation.PreDestroy;
 
 import org.jboss.errai.cdi.test.stress.client.shared.ConfigurationRequest;
 import org.jboss.errai.cdi.test.stress.client.shared.SubscriptionRequest;
@@ -128,4 +129,9 @@ public class SimpleCDIService {
 
     currentConfiguration = config;
   }
+  
+  @PreDestroy
+  public void stopTicker() {
+	  tickMaker.shutdown();
+  }  
 }
