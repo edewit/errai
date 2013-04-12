@@ -34,6 +34,7 @@ import org.jboss.errai.enterprise.jaxrs.client.shared.entity.ByteArrayTestWrappe
 import org.jboss.errai.enterprise.jaxrs.client.shared.entity.ImmutableEntity;
 import org.jboss.errai.enterprise.jaxrs.client.shared.entity.User;
 import org.jboss.errai.enterprise.jaxrs.client.shared.entity.User.Gender;
+import org.jboss.errai.marshalling.client.Marshalling;
 import org.junit.Test;
 
 /**
@@ -175,6 +176,33 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
   }
 
   @Test
+  public void testJacksonMarshallingOfListLong() {
+    delayTestFinish(5000);
+
+    final List<Long> longs = new ArrayList<Long>();
+    longs.add(3L);
+    longs.add(4L);
+
+    String jackson = MarshallingWrapper.toJSON(longs);
+    System.out.println("Marshalling.toJSON(longs) = " + Marshalling.toJSON(longs));
+
+    call(JacksonTestService.class,
+            new RemoteCallback<String>() {
+              @Override
+              public void callback(String jackson) {
+                assertNotNull("Server failed to parse JSON using Jackson", jackson);
+                List list = MarshallingWrapper.fromJSON(jackson, List.class, Long.class);
+                System.out.println("list = " + list);
+//                assertEquals(2, list.size());
+//                assertEquals(Long.class, list.get(0).getClass());
+//                assertEquals(longs, list);
+                finishTest();
+              }
+            }).postJacksonListOfLong(jackson);
+
+  }
+
+  @Test
   public void testJacksonMarshallingOfPortableWithByteArray() {
     delayTestFinish(5000);
 
@@ -201,7 +229,7 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
     users.put("2", new User(12l, "first2", "last2", 40, Gender.MALE, null));
 
     String jackson = MarshallingWrapper.toJSON(users);
-
+    System.out.println("Marshalling.toJSON(users.get(\"1\")); = " + Marshalling.toJSON(users.get("1")));
     call(JacksonTestService.class,
         new RemoteCallback<String>() {
           @Override

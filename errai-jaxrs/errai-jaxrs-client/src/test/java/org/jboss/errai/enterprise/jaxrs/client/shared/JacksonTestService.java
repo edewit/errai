@@ -111,4 +111,8 @@ public interface JacksonTestService {
   @POST
   @Path("/map")
   public String postJacksonMap(String jackson);
+
+  @POST
+  @Path("/listOfLong")
+  String postJacksonListOfLong(String jackson);
 }

@@ -87,6 +87,19 @@ public class JacksonTestServiceImpl implements JacksonTestService {
   }
 
   @Override
+  public String postJacksonListOfLong(String jackson) {
+    ObjectMapper mapper = new ObjectMapper();
+    try {
+      @SuppressWarnings("unchecked")
+      List<Long> longList = mapper.readValue(jackson, List.class);
+      return mapper.writeValueAsString(longList);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  @Override
   public String postJacksonMap(String jackson) {
     ObjectMapper mapper = new ObjectMapper();
     try {
