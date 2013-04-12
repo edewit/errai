@@ -99,8 +99,6 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
 
     String jackson = MarshallingWrapper.toJSON(user);
 
-    System.out.println(jackson);
-    
     call(JacksonTestService.class,
         new RemoteCallback<String>() {
           @Override
@@ -121,7 +119,6 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
     users.add(new User(12l, "first2", "last2", 40, Gender.MALE, null));
 
     String jackson = MarshallingWrapper.toJSON(users);
-    System.out.println(jackson);
     call(JacksonTestService.class,
         new RemoteCallback<String>() {
           @Override
@@ -176,6 +173,26 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
   }
 
   @Test
+  public void testJacksonMarshallingOfLongRounding() {
+    delayTestFinish(5000);
+
+    final Long id = 10000000000000001L;
+    User user = new User(id, "Clark", "Kent", 30, Gender.MALE, null);
+
+    String jackson = MarshallingWrapper.toJSON(user);
+
+    call(JacksonTestService.class,
+            new RemoteCallback<String>() {
+              @Override
+              public void callback(String jackson) {
+                assertNotNull("Server failed to parse JSON using Jackson", jackson);
+                User superman = MarshallingWrapper.fromJSON(jackson, User.class);
+                assertEquals(id, superman.getId());
+              }
+            }).postJackson(jackson);
+  }
+
+  @Test
   public void testJacksonMarshallingOfListLong() {
     delayTestFinish(5000);
 
@@ -184,7 +201,6 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
     longs.add(4L);
 
     String jackson = MarshallingWrapper.toJSON(longs);
-    System.out.println("Marshalling.toJSON(longs) = " + Marshalling.toJSON(longs));
 
     call(JacksonTestService.class,
             new RemoteCallback<String>() {
@@ -192,10 +208,9 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
               public void callback(String jackson) {
                 assertNotNull("Server failed to parse JSON using Jackson", jackson);
                 List list = MarshallingWrapper.fromJSON(jackson, List.class, Long.class);
-                System.out.println("list = " + list);
-//                assertEquals(2, list.size());
-//                assertEquals(Long.class, list.get(0).getClass());
-//                assertEquals(longs, list);
+                assertEquals(2, list.size());
+                assertEquals(Long.class, list.get(0).getClass());
+                assertEquals(longs, list);
                 finishTest();
               }
             }).postJacksonListOfLong(jackson);
@@ -229,7 +244,6 @@ public class JacksonIntegrationTest extends AbstractErraiJaxrsTest {
     users.put("2", new User(12l, "first2", "last2", 40, Gender.MALE, null));
 
     String jackson = MarshallingWrapper.toJSON(users);
-    System.out.println("Marshalling.toJSON(users.get(\"1\")); = " + Marshalling.toJSON(users.get("1")));
     call(JacksonTestService.class,
         new RemoteCallback<String>() {
           @Override
