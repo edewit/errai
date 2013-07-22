@@ -64,11 +64,19 @@
     <gwt.version>2.5.1</gwt.version>
     <uel.impl.version>2.1.2-b04</uel.impl.version>
     <maven.compiler.plugin.version>2.3.2</maven.compiler.plugin.version>
+    <!--<version.shrinkwrap.resolvers>2.0.0</version.shrinkwrap.resolvers>-->
     <argLine></argLine>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <!--<dependency>-->
+        <!--<groupId>org.jboss.shrinkwrap.resolver</groupId>-->
+        <!--<artifactId>shrinkwrap-resolver-bom</artifactId>-->
+        <!--<version>${version.shrinkwrap.resolvers}</version>-->
+        <!--<scope>import</scope>-->
+        <!--<type>pom</type>-->
+      <!--</dependency>-->
       <dependency>
         <groupId>org.jboss.arquillian</groupId>
         <artifactId>arquillian-bom</artifactId>
@@ -80,6 +88,12 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.jboss.arquillian.extension</groupId>
+      <artifactId>arquillian-gwt</artifactId>
+      <version>1.0.0.Final-SNAPSHOT</version>
+    </dependency>
+
     <dependency>
       <groupId>org.jboss.errai</groupId>
       <artifactId>errai-jpa-client</artifactId>
@@ -125,16 +139,24 @@
     </dependency>
 
     <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.jboss.arquillian.junit</groupId>
       <artifactId>arquillian-junit-container</artifactId>
       <scope>test</scope>
     </dependency>
-    
-    <dependency>
-      <groupId>org.jboss.arquillian.extension</groupId>
-      <artifactId>arquillian-gwt</artifactId>
-      <version>1.0.0.Final-SNAPSHOT</version>
-    </dependency>
+
+    <!--<dependency>-->
+      <!--<groupId>org.jboss.arquillian.container</groupId>-->
+      <!--<artifactId>arquillian-weld-ee-embedded-1.1</artifactId>-->
+      <!--<version>1.0.0.CR3</version>-->
+      <!--<scope>test</scope>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>javax.enterprise</groupId>

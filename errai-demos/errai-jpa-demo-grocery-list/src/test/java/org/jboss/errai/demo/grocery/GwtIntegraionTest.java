@@ -7,12 +7,17 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.gwt.RunAsGwtClient;
 import org.jboss.arquillian.gwt.client.ArquillianGwtTestCase;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.GenericArchive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * @author edewit@redhat.com
@@ -22,10 +27,14 @@ public class GwtIntegraionTest extends ArquillianGwtTestCase {
 
   @Deployment
   public static WebArchive createDeployment() {
+    final Collection<GenericArchive> lib = DependencyResolvers.use(MavenDependencyResolver.class)
+            .artifact("org.jboss.errai:errai-javaee-all:3.0-SNAPSHOT").resolveAs(GenericArchive.class);
     return ShrinkWrap.create(WebArchive.class, "test.war")
+            .addAsLibraries(lib)
 //        .addClass(GreetingService.class)
 //        .addClass(GreetingServiceImpl.class)
-        .addAsWebInfResource(new File("src/main/webapp/WEB-INF/web.xml"));
+            .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
+            .addAsWebInfResource(new File("src/main/webapp/WEB-INF/web.xml"));
   }
 
 
