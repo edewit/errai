@@ -7,9 +7,21 @@
   </engine>
 
   <!-- universal configuration for both JBoss AS 6 and JBoss AS 7 -->
-  <container qualifier="jboss" default="true">
+  <container qualifier="jboss" >
     <configuration>
       <property name="jbossHome">target/jboss-as-7.1.1.Final</property>
+    </configuration>
+  </container>
+  <container qualifier="android" default="true">
+    <configuration>
+      <property name="adapterImplClass">
+        org.arquillian.droidium.container.AndroidDeployableContainer
+      </property>
+      <property name="avdName">nexus7</property>
+      <property name="droneHostPort">8080</property>
+      <property name="droneGuestPort">8080</property>
+      <property name="apiLevel">17</property>
+      <property name="serialId">0123456789ABCDEF</property>
     </configuration>
   </container>
 </arquillian>

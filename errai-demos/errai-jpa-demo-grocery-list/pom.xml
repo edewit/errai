@@ -64,6 +64,7 @@
     <gwt.version>2.5.1</gwt.version>
     <uel.impl.version>2.1.2-b04</uel.impl.version>
     <maven.compiler.plugin.version>2.3.2</maven.compiler.plugin.version>
+    <version.droidium>0.0.1-SNAPSHOT</version.droidium>
     <argLine></argLine>
   </properties>
 
@@ -123,6 +124,22 @@
           <artifactId>servlet-api-2.5</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.arquillian.container</groupId>
+      <artifactId>arquillian-droidium-container-depchain</artifactId>
+      <version>${version.droidium}</version>
+      <type>pom</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.arquillian.extension</groupId>
+      <artifactId>arquillian-droidium-native-depchain</artifactId>
+      <version>${version.droidium}</version>
+      <type>pom</type>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -945,6 +962,11 @@
             </fileset>
           </filesets>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jboss.errai</groupId>
+        <artifactId>cordova-maven-plugin</artifactId>
+        <version>${project.version}</version>
       </plugin>
     </plugins>
 
